@@ -1,0 +1,59 @@
+# Docker Compose file format version
+version: '3'
+# Define all services/containers for this application
+services:
+  # Application service configuration
+  app:
+    # Build Docker image from Dockerfile in current directory
+    build: .
+    # Custom name for the application container
+    container_name: todo-app
+    # Environment variables passed to the container
+    environment:
+      # Database connection string format: postgresql://<USER>:<PASSWORD>@<HOST>:<PORT>/<DATABASE>?schema=<SCHEMA>
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/todoapp
+      # Secret key used for JWT token generation and verification
+      - JWT_SECRET=_this_is_shoom_jwt_key_123
+      # Node.js environment mode
+      - NODE_ENV=development
+      # Port number the application will listen on inside the container
+      - PORT=5858
+    # Port mapping: host port -> container port
+    ports:
+      # Map host port 5858 to container port 5858
+      - "5858:5858"
+    # Service dependencies - ensures db starts before app
+    depends_on:
+      # Wait for the database service to start
+      - db
+    # Volume mounts for data persistence and live code updates
+    volumes:
+      # Mount current directory to /app in container for live code sync
+      - .:/app
+  # PostgreSQL database service configuration
+  db:
+    # Use official PostgreSQL 13 Alpine Linux image
+    image: postgres:13-alpine
+    # Custom name for the database container
+    container_name: postgres-db
+    # PostgreSQL-specific environment variables
+    environment:
+      # PostgreSQL superuser username
+      POSTGRES_USER: postgres
+      # PostgreSQL superuser password
+      POSTGRES_PASSWORD: postgres
+      # Initial database name - must match DATABASE in app's DATABASE_URL
+      POSTGRES_DB: todoapp
+    # Port mapping for database access
+    ports:
+      # Map host port 5432 to container port 5432 (PostgreSQL default)
+      - "5432:5432"
+    # Volume mounts for database data persistence
+    volumes:
+      # Mount named volume to PostgreSQL data directory for persistent storage
+      - postgres-data:/var/lib/postgresql/data
+
+# Named volumes definition for persistent data storage
+volumes:
+  # Named volume to persist PostgreSQL data across container restarts and removals
+  postgres-data:
